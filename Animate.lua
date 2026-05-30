@@ -63,8 +63,6 @@ function CustomAnimate.Init(Character, Animator)
 		CurrentState = typeof(nameOrData) == "string" and nameOrData or "CustomData"
 		CurrentPriority = newPriority
 
-		print("Playing:", CurrentState, "| Priority:", newPriority)
-
 		Animator:Play(animData, 1, 0.2)
 
 		-- ВОЗВРАЩАЕМ ДЛИТЕЛЬНОСТЬ АНИМАЦИИ, ЧТОБЫ ИСПОЛЬЗОВАТЬ ЕЕ В GUI

@@ -4,84 +4,124 @@ local CustomAnimate = {}
 function CustomAnimate.Init(Character, Animator)
 	local Humanoid = Character:WaitForChild("Humanoid")
 
-	-- ==========================================
-	-- 1. ПРЕДЗАГРУЗКА АНИМАЦИЙ (Как в оригинале)
-	-- ==========================================
-	local anims = {
-		idle  = Animator:GetAnim("idle"),
-		walk  = Animator:GetAnim("walk"),
-		run   = Animator:GetAnim("run"),     -- Если есть
-		jump  = Animator:GetAnim("jump"),
-		fall  = Animator:GetAnim("fall"),
-		climb = Animator:GetAnim("climb"),
-		sit   = Animator:GetAnim("sit"),
+	print("CustomAnimate: Preloading animations...")
+
+	local Anims = {
+		Idle   = Animator:GetAnim("idle"),
+		Walk   = Animator:GetAnim("walk"),
+		Run    = Animator:GetAnim("run"),
+		Jump   = Animator:GetAnim("jump"),
+		Fall   = Animator:GetAnim("fall"),
+		Climb  = Animator:GetAnim("climb"),
+		Sit    = Animator:GetAnim("sit"),
 	}
 
-	if not anims.idle or not anims.walk then
-		warn("CustomAnimate: CRITICAL! Idle or Walk animation missing.")
+	if not Anims.Idle or not Anims.Walk then
+		warn("Critical Animations Missing!")
 		return
 	end
 
+	local Priorities = {
+		Core   = 1,
+		Action = 5,
+	}
 
-	local currentAnim = nil
+	local CurrentPriority = 0
+	local CurrentState = "None"
 
-	-- ==========================================
-	-- 2. ФУНКЦИЯ ПРОИГРЫВАНИЯ (Как в оригинале)
-	-- ==========================================
-	local function playAnim(name)
-		if currentAnim == name then return end
+	-- Вспомогательная функция для получения длительности из данных анимации
+	local function GetDuration(animData)
+		if animData and animData.Keyframes then
+			local times = {}
+			for t, _ in pairs(animData.Keyframes) do table.insert(times, t) end
+			table.sort(times)
+			return times[#times] or 0.1
+		end
+		return 0.5 -- Дефолт, если не нашли
+	end
 
-		local animModule = anims[name]
-		if not animModule then 
-			-- Если конкретной анимации нет (например, run), пробуем откатиться на walk/idle
-			if name == "run" and anims.walk then animModule = anims.walk
-			elseif name == "toolnone" and anims.idle then animModule = anims.idle
-			else return end
+	local function PlayAnim(nameOrData, priorityType, forceDuration)
+		local newPriority = Priorities[priorityType] or Priorities.Core
+
+		if newPriority < CurrentPriority then return end
+
+		local animData = nameOrData
+		if type(nameOrData) == "string" then
+			animData = Anims[nameOrData]
+			if not animData then animData = Animator:GetAnim(nameOrData) end
 		end
 
-		-- Вызываем Play с данными анимации
-		Animator:Play(animModule, 1, 0.2)
+		if not animData then 
+			warn("Animation data not found for:", nameOrData)
+			return 
+		end
 
-		currentAnim = name
+		if typeof(nameOrData) == "string" and CurrentState == nameOrData and newPriority == CurrentPriority then
+			return
+		end
+
+		CurrentState = typeof(nameOrData) == "string" and nameOrData or "CustomData"
+		CurrentPriority = newPriority
+
+		print("Playing:", CurrentState, "| Priority:", newPriority)
+
+		Animator:Play(animData, 1, 0.2)
+
+		-- ВОЗВРАЩАЕМ ДЛИТЕЛЬНОСТЬ АНИМАЦИИ, ЧТОБЫ ИСПОЛЬЗОВАТЬ ЕЕ В GUI
+		return GetDuration(animData)
 	end
 
 	-- ==========================================
-	-- 3. СОБЫТИЯ HUMANOID (1 в 1 как в оригинале)
+	-- ОБРАБОТЧИКИ СОБЫТИЙ
 	-- ==========================================
 
 	Humanoid.Running:Connect(function(speed)
-		if speed > 0.05 then
-			playAnim("walk")
-		else
-			playAnim("idle")
-		end
+		if CurrentPriority >= 5 then return end
+		if speed > 0.05 then PlayAnim("Walk", "Core")
+		else PlayAnim("Idle", "Core") end
 	end)
 
-	Humanoid.Jumping:Connect(function()
-		playAnim("jump")
-	end)
-
-	Humanoid.FreeFalling:Connect(function()
-		playAnim("fall")
-	end)
-
-	Humanoid.Climbing:Connect(function()
-		playAnim("climb")
-	end)
+	Humanoid.Jumping:Connect(function() PlayAnim("Jump", "Core") end)
+	Humanoid.FreeFalling:Connect(function() PlayAnim("Fall", "Core") end)
 
 	Humanoid.Seated:Connect(function(isSeated)
-		if isSeated then
-			playAnim("sit")
-		else
-			playAnim("idle")
-		end
+		if isSeated then PlayAnim("Sit", "Action")
+		else PlayAnim("Idle", "Core") end
 	end)
 
 	-- ==========================================
-	-- 4. ИНИЦИАЛИЗАЦИЯ (Запуск Idle)
+	-- ЭКСПОРТ ФУНКЦИИ ДЛЯ GUI (_G.PlayCustomAnim)
 	-- ==========================================
-	playAnim("idle")
 
+	_G.PlayCustomAnim = function(animSource)
+		-- Запускаем анимацию и получаем её реальную длительность из файла
+		local realDuration = PlayAnim(animSource, "Action")
+
+		-- Если пользователь не указал длительность вручную, используем реальную из файла
+		local durationToUse = realDuration
+
+		-- Если длительность есть и анимация не зациклена (Loop=false в файле), ставим таймер сброса
+		-- Проверка на зацикленность сложна здесь без доступа к треку, 
+		-- поэтому просто используем логику: если manualDuration=nil, пробуем взять из файла.
+
+		if durationToUse and durationToUse > 0 then
+			task.delay(durationToUse + 0.1, function() -- +0.1 запас на плавность
+				-- Сбрасываем приоритет только если с тех пор не запустили что-то более важное
+				if CurrentPriority <= 5 then 
+					CurrentPriority = 0 
+
+					if Humanoid.MoveDirection.Magnitude > 0.1 then
+						PlayAnim("Walk", "Core")
+					else
+						PlayAnim("Idle", "Core")
+					end
+				end
+			end)
+		end
+	end
+
+	PlayAnim("Idle", "Core")
+	print("CustomAnimate with Auto-Duration Initialized.")
 end
 
 return CustomAnimate

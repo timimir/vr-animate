@@ -7,7 +7,6 @@ local RunService = game:GetService("RunService")
 -- НАСТРОЙКИ GITHUB
 -- ==========================================
 
-local STUDIO_PATH = ReplicatedStorage.Custom -- Путь для тестов в Studio
 local GITHUB_BASE = "https://raw.githubusercontent.com/timimir/vr-animate/refs/heads/main/"
 
 -- ==========================================

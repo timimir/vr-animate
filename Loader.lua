@@ -6,12 +6,9 @@ local RunService = game:GetService("RunService")
 -- ==========================================
 -- НАСТРОЙКИ GITHUB
 -- ==========================================
-local GITHUB_USER = "timimir"       -- !!! ЗАМЕНИ НА СВОЙ НИК
-local GITHUB_REPO = "vr-animate"   -- !!! ЗАМЕНИ НА ИМЯ РЕПОЗИТОРИЯ
-local GITHUB_BRANCH = "main"
 
 local STUDIO_PATH = ReplicatedStorage.Custom -- Путь для тестов в Studio
-local GITHUB_BASE = string.format("https://raw.githubusercontent.com/%s/%s/%s/", GITHUB_USER, GITHUB_REPO, GITHUB_BRANCH)
+local GITHUB_BASE = "https://raw.githubusercontent.com/timimir/vr-animate/refs/heads/main/"
 
 -- ==========================================
 -- ФУНКЦИЯ ЗАГРУЗКИ МОДУЛЕЙ

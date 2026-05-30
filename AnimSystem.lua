@@ -3,11 +3,7 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- НАСТРОЙКИ GITHUB
-local GITHUB_USER = "timimir"       -- !!! ЗАМЕНИ
-local GITHUB_REPO = "vr-animate"   -- !!! ЗАМЕНИ
-local GITHUB_BRANCH = "main"
-local GITHUB_BASE = string.format("https://raw.githubusercontent.com/%s/%s/%s/Anims/", GITHUB_USER, GITHUB_REPO, GITHUB_BRANCH)
+local GITHUB_BASE = "https://raw.githubusercontent.com/timimir/vr-animate/refs/heads/main/Anims/"
 
 local Animator = {}
 Animator.__index = Animator

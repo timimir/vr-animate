@@ -64,14 +64,6 @@ end
 
 -- МЕТОД ПОЛУЧЕНИЯ АНИМАЦИИ (HTTP или Local)
 function Animator:GetAnim(animName)
-	-- Простой кэш можно добавить сюда, если нужно, но пока грузим каждый раз или из Studio
-	if RunService:IsStudio() then
-		local AnimsFolder = ReplicatedStorage:FindFirstChild("Custom") and ReplicatedStorage.Custom:FindFirstChild("Anims")
-		if AnimsFolder then
-			local mod = AnimsFolder:FindFirstChild(animName)
-			if mod then return require(mod) end
-		end
-	end
 
 	local url = GITHUB_BASE .. animName .. ".lua"
 	local success, code = pcall(function() return game:HttpGetAsync(url) end)

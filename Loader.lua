@@ -13,10 +13,6 @@ local GITHUB_BASE = "https://raw.githubusercontent.com/timimir/vr-animate/refs/h
 -- ФУНКЦИЯ ЗАГРУЗКИ МОДУЛЕЙ
 -- ==========================================
 local function LoadModule(name)
-	-- Режим Studio: берем из локальной папки
-	if RunService:IsStudio() and STUDIO_PATH:FindFirstChild(name) then
-		return require(STUDIO_PATH:FindFirstChild(name))
-	end
 
 	-- Режим Игры: качаем с GitHub
 	local url = GITHUB_BASE .. name .. ".lua"

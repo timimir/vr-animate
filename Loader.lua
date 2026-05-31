@@ -240,6 +240,8 @@ Spacer(2)
 AddButton("Backflip",   "backflip",   Color3.fromRGB(168, 85, 247), 3)
 AddButton("Sit", "sit", Color3.fromRGB(17, 255, 0), 4)
 AddButton("Punch", "punch", Color3.fromRGB(255, 48, 48), 5)
+AddButton("Transfuring", "transfuring", Color3.fromRGB(255, 8, 251), 6)
+AddButton("Grab", "grab", Color3.fromRGB(24, 36, 255), 7)
 
 
 LocalPlayer.Character.Humanoid.Died:Connect(function()

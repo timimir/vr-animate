@@ -1,4 +1,3 @@
--- MainLoader.lua
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -6,25 +5,21 @@ local RunService = game:GetService("RunService")
 -- ==========================================
 -- НАСТРОЙКИ GITHUB
 -- ==========================================
-
 local GITHUB_BASE = "https://raw.githubusercontent.com/timimir/vr-animate/refs/heads/main/"
 
 -- ==========================================
 -- ФУНКЦИЯ ЗАГРУЗКИ МОДУЛЕЙ
 -- ==========================================
 local function LoadModule(name)
-
 	-- Режим Игры: качаем с GitHub
 	local url = GITHUB_BASE .. name .. ".lua"
 	local success, code = pcall(function() 
 		return game:HttpGetAsync(url) 
 	end)
-
 	if success and code then
 		local func = loadstring(code)
 		if func then return func() end
 	end
-
 	warn("Failed to load module:", name)
 	return nil
 end
@@ -35,7 +30,6 @@ end
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
-
 
 -- 1. Загружаем ядро системы
 local AnimSystem = LoadModule("AnimSystem")
@@ -48,7 +42,6 @@ if not (AnimSystem and VRNetwork and CustomAnimate) then
 end
 
 -- 2. Находим RemoteEvent игры (Путь зависит от игры!)
--- Для теста в своей игре создай: ReplicatedStorage/MainModule/Remotes/Communication
 local MainModule = ReplicatedStorage:FindFirstChild("MainModule")
 local Remotes = MainModule and MainModule:FindFirstChild("Remotes")
 local CommEvent = Remotes and Remotes:FindFirstChild("Communication")
@@ -68,7 +61,6 @@ VRNetwork.Start(Animator, CommEvent)
 
 -- 5. Запускаем логику переключения анимаций (CustomAnimate)
 CustomAnimate.Init(Character, Animator)
-
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "AnimMenu"
@@ -153,7 +145,6 @@ end
 
 -- Функция: кнопка анимации
 -- accentColor: Color3 для подсветки (nil = нейтральный)
--- badge: текст бейджа ("∞" или "0.6s")
 local function AddButton(text, animName, accentColor, order)
 	local Btn = Instance.new("TextButton")
 	Btn.Size = UDim2.new(1, 0, 0, 36)
@@ -180,7 +171,6 @@ local function AddButton(text, animName, accentColor, order)
 	BtnStroke.Thickness = 1
 	BtnStroke.Parent = Btn
 
-
 	-- Название
 	local NameLabel = Instance.new("TextLabel")
 	NameLabel.Text = text
@@ -193,10 +183,8 @@ local function AddButton(text, animName, accentColor, order)
 	NameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	NameLabel.Parent = Btn
 
-
 	-- Hover / Active эффекты
 	Btn.MouseEnter:Connect(function()
-		Btn.BackgroundTransparency = accentColor and 0 or 0
 		Btn.BackgroundColor3 = accentColor
 			and Color3.fromRGB(
 				math.floor(accentColor.R * 255 * 0.2),
@@ -222,6 +210,70 @@ local function AddButton(text, animName, accentColor, order)
 	end)
 end
 
+-- Функция: кнопка Stop (не анимация, а команда)
+local function AddStopButton(text, accentColor, order)
+	local Btn = Instance.new("TextButton")
+	Btn.Size = UDim2.new(1, 0, 0, 36)
+	Btn.BackgroundColor3 = accentColor
+		and Color3.fromRGB(
+			math.floor(accentColor.R * 255 * 0.12),
+			math.floor(accentColor.G * 255 * 0.12),
+			math.floor(accentColor.B * 255 * 0.12)
+		)
+		or Color3.fromRGB(28, 28, 34)
+	Btn.BackgroundTransparency = 0
+	Btn.BorderSizePixel = 0
+	Btn.Text = ""
+	Btn.LayoutOrder = order
+	Btn.Parent = Frame
+
+	local BtnCorner = Instance.new("UICorner")
+	BtnCorner.CornerRadius = UDim.new(0, 7)
+	BtnCorner.Parent = Btn
+
+	local BtnStroke = Instance.new("UIStroke")
+	BtnStroke.Color = accentColor or Color3.fromRGB(255, 255, 255)
+	BtnStroke.Transparency = accentColor and 0.65 or 0.88
+	BtnStroke.Thickness = 1
+	BtnStroke.Parent = Btn
+
+	local NameLabel = Instance.new("TextLabel")
+	NameLabel.Text = text
+	NameLabel.Size = UDim2.new(1, -80, 1, 0)
+	NameLabel.Position = UDim2.new(0, 6, 0, 0)
+	NameLabel.BackgroundTransparency = 1
+	NameLabel.TextColor3 = Color3.fromRGB(224, 224, 224)
+	NameLabel.Font = Enum.Font.GothamMedium
+	NameLabel.TextSize = 13
+	NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+	NameLabel.Parent = Btn
+
+	Btn.MouseEnter:Connect(function()
+		Btn.BackgroundColor3 = accentColor
+			and Color3.fromRGB(
+				math.floor(accentColor.R * 255 * 0.2),
+				math.floor(accentColor.G * 255 * 0.2),
+				math.floor(accentColor.B * 255 * 0.2)
+			)
+			or Color3.fromRGB(40, 40, 50)
+	end)
+	Btn.MouseLeave:Connect(function()
+		Btn.BackgroundColor3 = accentColor
+			and Color3.fromRGB(
+				math.floor(accentColor.R * 255 * 0.12),
+				math.floor(accentColor.G * 255 * 0.12),
+				math.floor(accentColor.B * 255 * 0.12)
+			)
+			or Color3.fromRGB(28, 28, 34)
+	end)
+
+	Btn.MouseButton1Click:Connect(function()
+		if _G.StopCustomAnim then
+			_G.StopCustomAnim()
+		end
+	end)
+end
+
 -- Небольшой отступ между категорией и кнопками
 local function Spacer(order)
 	local S = Instance.new("Frame")
@@ -234,15 +286,16 @@ end
 -- ==========================================
 -- СТРУКТУРА МЕНЮ
 -- ==========================================
-
 AddCategory("ACTIONS", 1)
 Spacer(2)
 AddButton("Backflip",   "backflip",   Color3.fromRGB(168, 85, 247), 3)
-AddButton("Sit", "sit", Color3.fromRGB(17, 255, 0), 4)
-AddButton("Punch", "punch", Color3.fromRGB(255, 48, 48), 5)
-AddButton("Transfuring", "transfuring", Color3.fromRGB(255, 8, 251), 6)
-AddButton("Grab", "grab", Color3.fromRGB(24, 36, 255), 7)
+AddButton("Sit",        "sit",        Color3.fromRGB(17, 255, 0),   4)
+AddButton("Punch",      "punch",      Color3.fromRGB(255, 48, 48),   5)
+AddButton("Transfuring", "transfuring", Color3.fromRGB(255, 8, 251),   6)
+AddButton("Grab",       "grab",       Color3.fromRGB(24, 36, 255),   7)
 
+Spacer(8)
+AddStopButton("Stop", Color3.fromRGB(239, 68, 68), 9)
 
 LocalPlayer.Character.Humanoid.Died:Connect(function()
 	ScreenGui:Destroy()

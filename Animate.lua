@@ -29,6 +29,29 @@ function CustomAnimate.Init(Character, Animator)
 	local CurrentPriority = 0
 	local CurrentState = "None"
 
+	local function IsRunning(currentSpeed)
+
+		local PlayerGui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
+		if not PlayerGui then return false end
+
+		local RunScript = PlayerGui:FindFirstChild("Run")
+		if not RunScript then 
+			return currentSpeed > 16 
+		end
+
+		local success, walkSpeed = pcall(function()
+			return RunScript.Walkspeed.Value * (RunScript.WalkPercentage.Value / 100)
+		end)
+
+		if not success then
+			return false
+		end
+
+		local threshold = walkSpeed + 1
+
+		return currentSpeed >= threshold
+	end
+
 	-- Вспомогательная функция для получения длительности из данных анимации
 	local function GetDuration(animData)
 		if animData and animData.Keyframes then
@@ -75,7 +98,12 @@ function CustomAnimate.Init(Character, Animator)
 
 	Humanoid.Running:Connect(function(speed)
 		if CurrentPriority >= 5 then return end
-		if speed > 0.05 then PlayAnim("Walk", "Core")
+		if speed > 0.05 then 
+			if IsRunning(speed) then
+				PlayAnim("Run", "Core")
+			else
+				PlayAnim("Walk", "Core")
+			end
 		else PlayAnim("Idle", "Core") end
 	end)
 
@@ -109,7 +137,12 @@ function CustomAnimate.Init(Character, Animator)
 					CurrentPriority = 0 
 
 					if Humanoid.MoveDirection.Magnitude > 0.1 then
-						PlayAnim("Walk", "Core")
+						local speed = Character.PrimaryPart.AssemblyLinearVelocity.Magnitude
+						if IsRunning(speed) then
+							PlayAnim("Run", "Core")
+						else
+							PlayAnim("Walk", "Core")
+						end
 					else
 						PlayAnim("Idle", "Core")
 					end
